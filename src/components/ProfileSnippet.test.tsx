@@ -103,6 +103,8 @@ describe('ProfileSnippet', () => {
     const timezone = screen.getByTestId('profile-snippet-timezone')
     // Offset is relative to the test runner's zone, so assert on the format only.
     expect(timezone.textContent).toMatch(/^Europe\/London \([+-]\d{2}:\d{2}\)$/)
+    // The header must render a clock icon next to the zone text (WEB-155).
+    expect(timezone.querySelector('svg')).toBeInTheDocument()
   })
 
   it('should not render the timezone when it is unset', () => {

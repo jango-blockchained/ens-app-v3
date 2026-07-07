@@ -173,6 +173,7 @@ const Timezone = styled.div(
       display: block;
       width: ${theme.space['4']};
       height: ${theme.space['4']};
+      fill: currentColor;
     }
   `,
 )
