@@ -14,6 +14,13 @@ export const timezones: string[] = (() => {
   return []
 })()
 
+// A `Set` view of `timezones` for O(1) membership checks. Timezone validation
+// (`isValidTimezone` / `validateTimezone`) tests against this same source, so the
+// editor picker and validation can never disagree about what counts as canonical.
+// Empty when the runtime lacks `Intl.supportedValuesOf`; callers treat that as
+// "no allowlist available" and fall back to a best-effort check.
+export const canonicalTimezones: ReadonlySet<string> = new Set(timezones)
+
 // Options for the thorin `Select` autocomplete. The stored value is the canonical
 // IANA zone; the label swaps underscores for spaces so it reads naturally and is
 // still searchable by the zone name (e.g. "America/New York").

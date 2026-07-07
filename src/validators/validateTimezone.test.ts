@@ -19,4 +19,13 @@ describe('validateTimezone', () => {
     expect(validateTimezone('Europe')).toBe(false)
     expect(validateTimezone('12345')).toBe(false)
   })
+
+  // These legacy aliases resolve without throwing, so a parse-based check accepted
+  // them on the free-text / programmatic path. Validation is canonical-only.
+  it('rejects legacy aliases that resolve without throwing', () => {
+    expect(validateTimezone('PST')).toBe(false)
+    expect(validateTimezone('EST')).toBe(false)
+    expect(validateTimezone('GMT+5')).toBe(false)
+    expect(validateTimezone('US/Pacific')).toBe(false)
+  })
 })

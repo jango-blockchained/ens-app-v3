@@ -23,6 +23,23 @@ describe('isValidTimezone', () => {
     expect(isValidTimezone('Not/AZone')).toBe(false)
     expect(isValidTimezone('Mars/Olympus_Mons')).toBe(false)
   })
+
+  // V8's ICU resolves these legacy aliases without throwing, so a "does Intl
+  // accept it" check wrongly accepted them. Validation is canonical-only.
+  it('rejects legacy aliases that Intl resolves without throwing', () => {
+    expect(isValidTimezone('PST')).toBe(false)
+    expect(isValidTimezone('EST')).toBe(false)
+    expect(isValidTimezone('GMT+5')).toBe(false)
+    expect(isValidTimezone('US/Pacific')).toBe(false)
+  })
+
+  it('accepts canonical zones the runtime may spell differently or omit', () => {
+    // ICU may enumerate these under an older spelling (Asia/Calcutta) or omit UTC
+    // from the allowlist, but they are genuine canonical zones and must validate.
+    expect(isValidTimezone('Asia/Kolkata')).toBe(true)
+    expect(isValidTimezone('Asia/Kathmandu')).toBe(true)
+    expect(isValidTimezone('UTC')).toBe(true)
+  })
 })
 
 describe('getTimezoneOffset', () => {
@@ -80,5 +97,14 @@ describe('getTimezoneOffset', () => {
     expect(getTimezoneOffset(undefined, { now: NOW, viewerTimeZone: 'UTC' })).toBeNull()
     expect(getTimezoneOffset('', { now: NOW, viewerTimeZone: 'UTC' })).toBeNull()
     expect(getTimezoneOffset('Not/AZone', { now: NOW, viewerTimeZone: 'UTC' })).toBeNull()
+  })
+
+  // An informal `PST` (and other legacy aliases) must render nothing — i.e. a null
+  // offset, so the header shows nothing rather than `PST (-08:00)`.
+  it('returns null for legacy aliases so the header renders nothing', () => {
+    expect(getTimezoneOffset('PST', { now: NOW, viewerTimeZone: 'UTC' })).toBeNull()
+    expect(getTimezoneOffset('EST', { now: NOW, viewerTimeZone: 'UTC' })).toBeNull()
+    expect(getTimezoneOffset('GMT+5', { now: NOW, viewerTimeZone: 'UTC' })).toBeNull()
+    expect(getTimezoneOffset('US/Pacific', { now: NOW, viewerTimeZone: 'UTC' })).toBeNull()
   })
 })

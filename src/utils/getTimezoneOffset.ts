@@ -1,6 +1,8 @@
 // Utilities for rendering a profile's `timezone` text record as a viewer-relative
 // offset (e.g. `Europe/London (+02:00)`). Uses native `Intl` only — no date deps.
 
+import { canonicalTimezones } from '@app/constants/timezoneOptions'
+
 type GetTimezoneOffsetOptions = {
   /** The instant at which to compute the offset. Defaults to now. */
   now?: Date
@@ -9,19 +11,56 @@ type GetTimezoneOffsetOptions = {
 }
 
 /**
- * Whether `timeZone` is a time zone that `Intl` can resolve. Unknown zones make
- * the `Intl.DateTimeFormat` constructor throw a `RangeError`; we treat anything
- * that throws as invalid so callers can render nothing rather than crash.
+ * The ICU-canonical zone `Intl` resolves `timeZone` to, or `null` if the runtime
+ * rejects it. Doubles as the "does `Intl` accept this at all" check.
+ */
+const resolveTimeZone = (timeZone: string): string | null => {
+  try {
+    // Throws RangeError for time zones the runtime does not recognise.
+    return new Intl.DateTimeFormat(undefined, { timeZone }).resolvedOptions().timeZone
+  } catch {
+    return null
+  }
+}
+
+// The area (segment before the first `/`) of an IANA identifier, or '' when it
+// has no area — e.g. an abbreviation like `PST`.
+const timeZoneArea = (timeZone: string): string => {
+  const slash = timeZone.indexOf('/')
+  return slash === -1 ? '' : timeZone.slice(0, slash)
+}
+
+/**
+ * Whether `timeZone` is a canonical IANA zone — one the editor's picker could have
+ * produced. Checked for membership in the same `Intl.supportedValuesOf('timeZone')`
+ * allowlist the picker is built from, NOT "does `Intl` accept it": V8's ICU
+ * resolves legacy abbreviation/offset/compat aliases (`PST`, `EST`, `GMT+5`,
+ * `US/Pacific`) without throwing, and this feature is canonical-only.
+ *
+ * Two allowances keep genuine canonical zones valid across ICU builds, which
+ * disagree at the edges: a build may enumerate a zone under an older spelling
+ * (`Asia/Calcutta` for `Asia/Kolkata`) or omit `UTC` from the list. So a zone that
+ * resolves into the allowlist within the same area, and `UTC` itself, are accepted
+ * too. When the runtime lacks `Intl.supportedValuesOf` there is no allowlist, so we
+ * fall back to the best-effort "does `Intl` accept it" check rather than reject
+ * every zone.
  */
 export const isValidTimezone = (timeZone?: string): timeZone is string => {
   if (!timeZone || typeof timeZone !== 'string') return false
-  try {
-    // Throws RangeError for unknown time zones.
-    Intl.DateTimeFormat(undefined, { timeZone })
-    return true
-  } catch {
-    return false
-  }
+  // No allowlist (runtime without `Intl.supportedValuesOf`): stay best-effort.
+  if (canonicalTimezones.size === 0) return resolveTimeZone(timeZone) !== null
+  // Canonical fast path — guarantees every value the picker offers validates.
+  if (canonicalTimezones.has(timeZone)) return true
+  const resolved = resolveTimeZone(timeZone)
+  if (resolved === null) return false
+  // `UTC` is canonical but missing from some ICU allowlists, and is the viewer's
+  // own zone on UTC servers, which must stay valid.
+  if (resolved === 'UTC') return true
+  // Otherwise accept only a same-area rename of an allowlisted zone (spelling
+  // drift like `Kolkata`↔`Calcutta`); reject aliases whose resolution jumps area
+  // (`US/Pacific` → `America/…`) or that have no area at all (`PST`, `EST`).
+  const area = timeZoneArea(timeZone)
+  return area !== '' && area === timeZoneArea(resolved) && canonicalTimezones.has(resolved)
 }
 
 const getViewerTimeZone = (): string => {
