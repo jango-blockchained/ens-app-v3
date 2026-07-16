@@ -12,7 +12,7 @@ test.describe('Un-normalised Name Display', () => {
 
     // Search address and enter page
     await page.goto(`/${address1}`)
-    await expect(page.getByText('0x0c5...7AaFb')).toBeVisible()
+    await expect(page.getByText('0x0c5...7aafb')).toBeVisible()
 
     // Check it says X.eth and has View Profile button
     await expect(page.getByTestId('profile-snippet-name')).toHaveText('metamask.eth')
