@@ -106,7 +106,10 @@ export const useNamesForAddress = <TParams extends UseNamesForAddressParameters>
 
     return {
       normalisedData: { ...data, pages },
-      infiniteData: pages.reduce<GetNamesForAddressReturnType>((acc, page) => [...acc, ...page], []),
+      infiniteData: pages.reduce<GetNamesForAddressReturnType>(
+        (acc, page) => [...acc, ...page],
+        [],
+      ),
     }
   }, [data, nameWrapperAddress])
 
