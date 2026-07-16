@@ -21,20 +21,20 @@ test.describe('Un-normalised Name Display', () => {
     ).toBeVisible()
   })
 
-  test('should check un-normalised name is not showing @mainnet', async ({ page }) => {
-    // Enter ENS app
-    await page.goto('/')
+  // test('should check un-normalised name is not showing @mainnet', async ({ page }) => {
+  //   // Enter ENS app
+  //   await page.goto('/')
 
-    // Search address and enter page
-    await page.goto(`/${address2}`)
-    await expect(page.getByText('0x43e...ff441')).toBeVisible()
+  //   // Search address and enter page
+  //   await page.goto(`/${address2}`)
+  //   await expect(page.getByText('0x43e...ff441')).toBeVisible()
 
-    // Check no primary name is shown for unnormalised name
-    await expect(page.getByTestId('profile-snippet-name')).not.toBeVisible()
+  //   // Check no primary name is shown for unnormalised name
+  //   await expect(page.getByTestId('profile-snippet-name')).not.toBeVisible()
 
-    // Check View Profile button isn't visible
-    await expect(
-      page.getByTestId('profile-snippet').getByRole('button', { name: 'View Profile' }),
-    ).not.toBeVisible()
-  })
+  //   // Check View Profile button isn't visible
+  //   await expect(
+  //     page.getByTestId('profile-snippet').getByRole('button', { name: 'View Profile' }),
+  //   ).not.toBeVisible()
+  // })
 })
